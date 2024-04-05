@@ -8,21 +8,19 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
 def read_root():
-    posts = [
-        {
-            'userId':1,
-            'id':1,
-            'title':"this is title",
-            'body':'this is the body'
-        },
-        {
-            'userId':1,
-            'id':2,
-            'title':"this is title 2",
-            'body':'this is the body 2'
-        }
-    ]
-    return {"posts": posts}
+    data = {
+        "vertices":[
+            [-0.5,0,-0,5],
+            [0.5,0,-0,5],
+            [0.5,0,0,5],
+            [-0.5,0,0,5],
+        ],
+        "triangles":[
+            [0,2,1],
+            [0,3,2]
+        ]
+    }
+    return data
 
 
 @app.get("/items/{item_id}")

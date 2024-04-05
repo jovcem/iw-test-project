@@ -2,6 +2,7 @@ using System.Collections;
 using System;
 using UnityEngine;
 using UnityEngine.Networking;
+using System.Collections.Generic;
 
 [Serializable]
 public class Post
@@ -18,6 +19,16 @@ public class Posts
     public Post[] posts;
 }
 
+[Serializable]
+public class MeshData{
+    // public int[][] vertices;
+    // public int[][] triangles;
+
+    public List<List<float>> vertices;
+    public List<List<int>> triangles;
+}
+
+
 public class NetworkManager : MonoBehaviour
 {
     IEnumerator GetRequest(string url, Action<UnityWebRequest> callback)
@@ -32,35 +43,21 @@ public class NetworkManager : MonoBehaviour
 
     public void GetPosts()
     {
-        // StartCoroutine(GetRequest("https://jsonplaceholder.typicode.com/posts", (UnityWebRequest req) =>
-        // {
-        //     if (req.isNetworkError || req.isHttpError)
-        //     {
-        //         Debug.Log($"{req.error}: {req.downloadHandler.text}");
-        //     } else
-        //     {
-        //         Debug.Log(req.downloadHandler.text);
-        //         Posts posts = new Posts();
-        //         posts = JsonUtility.FromJson<Posts>( "{\"posts\":" + req.downloadHandler.text + "}" );
+        StartCoroutine(GetRequest("http://localhost:80", (UnityWebRequest req) =>
+        {
+            if (req.isNetworkError || req.isHttpError)
+            {
+                Debug.Log($"{req.error}: {req.downloadHandler.text}");
+            } else
+            {
+                Debug.Log(req.downloadHandler.text);
+                MeshData meshdata = JsonUtility.FromJson<MeshData>(req.downloadHandler.text);
+                Debug.Log(meshdata.triangles);
+                // GeneratePlane(meshdata.data);
+            }
+        }));
 
-                
-        //         foreach(Post post in posts.posts)
-        //         {
-        //             Debug.Log(post.title);
-        //         }
-
-        //         // 
-        //         string savePath = @"C:\\Users\\jovce\\Documents\\todo\\file.png"
-        //         // var uwr = new UnityWebRequest(url);
-        //         // uwr.method = UnityWebRequest.kHttpVerbGET;
-        //         var dh = new DownloadHandlerFile(savePath);
-        //         dh.removeFileOnAbort = true;
-        //         uwr.downloadHandler = dh;
-        //         yield return uwr.SendWebRequest();
-        //     }
-        // }));
-
-        StartCoroutine(DownloadFile());
+        // StartCoroutine(DownloadFile());
     }
 
     IEnumerator DownloadFile()
@@ -79,7 +76,7 @@ public class NetworkManager : MonoBehaviour
             Debug.Log("File successfully downloaded and saved to " + savePath);
 
             // LoadFBXFromFile(@"sample");
-            LoadModel();
+          
         }
 
     }
@@ -106,22 +103,40 @@ public class NetworkManager : MonoBehaviour
 
     public string modelPath = "Assets/models/sample.fbx"; // Path to the model prefab
 
-    void LoadModel()
-    {
-#if UNITY_EDITOR
-        // Load the model prefab from the specified path
-        GameObject modelPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);
+    Vector3[] ParseVertices(List<List<float>> vertices){
+        Vector3[] res = new Vector3[vertices.Count];
 
-        if (modelPrefab == null)
+        for (int i = 0; i < vertices.Count; i++)
         {
-            Debug.LogError("Failed to load model from path: " + modelPath);
-            return;
+            res[i] = new Vector3(vertices[i][0],vertices[i][1],vertices[i][2]);
         }
 
-        // Instantiate the loaded model as a GameObject in the scene
-        GameObject modelInstance = Instantiate(modelPrefab, Vector3.zero, Quaternion.identity);
-#else
-        Debug.LogError("AssetDatabase.LoadAssetAtPath() can only be used in Editor mode.");
-#endif
+        return res;
+    }
+
+    void GeneratePlane(MeshData data)
+    {
+        Mesh mesh = new Mesh();
+
+        // Debug.Log(data.vertices.Length);
+        Vector3[] vertices =  ParseVertices(data.vertices);
+
+        int[] triangles = new int[]
+        {
+            0, 2, 1, // triangle 1 (bottom-right-top-right)
+            0, 3, 2  // triangle 2 (bottom-left-top-right)
+        };
+
+        mesh.vertices = vertices;
+        mesh.triangles = triangles;
+        mesh.RecalculateNormals();
+
+        GameObject plane = new GameObject("My Plane");
+        MeshFilter meshFilter = plane.AddComponent<MeshFilter>();
+        meshFilter.mesh = mesh;
+
+        plane.transform.rotation = Quaternion.Euler(-90f, 0f, 0f);
+        // Optionally, add a MeshRenderer component to the GameObject
+        plane.AddComponent<MeshRenderer>();
     }
 }
