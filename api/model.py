@@ -54,16 +54,10 @@ class Model:
         tris = self.gen_triangles()
 
         obj_file = f"""
-# Blender v3.5.1 OBJ File: ''
+# OBJ File: ''
 # www.blender.org
-mtllib plane.mtl
 o Plane
 {verts}
-vt 0.000000 0.000000
-vt 1.000000 0.000000
-vt 1.000000 1.000000
-vt 0.000000 1.000000
-vn 0.0000 1.0000 0.0000
 usemtl None
 s off
 {tris}"""
