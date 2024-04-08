@@ -1,26 +1,16 @@
 from typing import Union
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from model import Model
 
 app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
+ 
 @app.get("/")
-def read_root():
-    data = {
-        "vertices":[
-            [-0.5,0,-0,5],
-            [0.5,0,-0,5],
-            [0.5,0,0,5],
-            [-0.5,0,0,5],
-        ],
-        "triangles":[
-            [0,2,1],
-            [0,3,2]
-        ]
-    }
-    return data
+def read_root(height: float=1.0):
+    obj_file = Model(height).generate()
+    return {"data":obj_file}
 
 
 @app.get("/items/{item_id}")
